@@ -1,0 +1,2 @@
+# 0_entrega_prueba
+En esta carpeta hay que entregar un primer fichero de prueba, los ejercicios en clase de la primera sesión, para ver si habéis entendido el funcionamiento de GitHub. Siempre, con el formato: apellido1_apellido2_nombre_xxx.R
