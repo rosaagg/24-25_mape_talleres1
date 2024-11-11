@@ -1,0 +1,188 @@
+---
+title: "Talleres 1 - Sesión 2"
+author: "Estudiante"
+author-title: Autores
+published-title: Última modificación
+date: "`r Sys.Date()`"
+format: 
+  html:
+    embed-resources: true
+    code-fold: false
+    code-summary: "Mostrar código."
+    toc: true
+    toc-depth: 2
+    toc-title: Tabla de contenidos
+lang: es
+editor_options: 
+  chunk_output_type: console
+editor: source
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+library(pacman)
+# Añade aquí las librerías necesarias para realizar la actividad
+p_load(tidyverse,readxl)
+```
+
+## Actividad Sesión 2
+
+Empezamos!
+
+
+### Cargar los datos
+
+```{r }
+# Cargar los datos
+elec23 <- read_xlsx("1_datos/202307_elec_congr_municipios.xlsx",
+            # Especificando el rango de celdas
+            range = "A6:BT8137") |> 
+  # Cambiar el nombre de las variables
+  rename(
+    CA = `Nombre de Comunidad`,
+    IdProv = `Código de Provincia`,
+    Prov = `Nombre de Provincia`,
+    IdMuni = `Código de Municipio`,
+    Muni = `Nombre de Municipio`,
+    Pob = Población,
+    Mesas = `Número de mesas`,
+    Censo = `Total censo electoral`,
+    Votantes = `Total votantes`,
+    VotVal = `Votos válidos`,
+    VotCand = `Votos a candidaturas`,
+    VotBl = `Votos en blanco`,
+    VotNul = `Votos nulos`,
+    JxCAT = `JxCAT - JUNTS`,
+    BILDU = `EH Bildu`,
+    PNV = `EAJ-PNV`,
+    BNG = B.N.G.,
+    UPN = U.P.N.
+  ) 
+```
+
+
+a. Selecciona los resultados de tu municipio
+
+```{r}
+mimuni <- elec23 %>% 
+  filter(Muni == "Zaragoza")
+  
+```
+
+b. Selecciona los datos del primer municipio de cada provincia
+
+```{r}
+elec23_muni1 <- elec23 %>% 
+  filter(IdMuni==1)
+```
+
+c. Selecciona los datos de dos provincias
+
+```{r}
+elec23_2prov <- elec23 %>% 
+  filter(IdProv %in% c(11,14))
+
+elec23_2prov <- elec23 %>% 
+  filter(IdProv == 11 | IdProv == 14)
+```
+
+d. Selecciona los municipios donde PP saque mejores resultados que PSOE
+
+```{r}
+elec23_ppmaspsoe <- elec23 %>% 
+  filter(PP>PSOE)
+```
+
+e. Selecciona los municipios donde PSOE saque mejores resultados que PP
+
+```{r}
+elec23_psoemaspp <- elec23 %>% 
+  filter(PSOE>PP)
+```
+
+f. Elimino una observación
+```{r}
+mimuni <- elec23 %>% 
+  filter(Muni != "Zaragoza")
+  
+```
+
+2. Select
+
+a. Vamos a seleccionar las variables mínimas para calcular la participación electoral
+
+```{r}
+elec23_part <- elec23 %>% 
+  select(IdProv,IdMuni,Muni,Votantes,Censo)
+  
+```
+
+b. Nos cargamos PACMA
+
+```{r}
+elec23_sinpacma <- elec23 %>% 
+  select(-PACMA)
+```
+
+
+c. Nos quedamos solo con los PAEs
+
+```{r}
+elec23_paes <- elec23 %>% 
+  select(IdProv,IdMuni,Muni,PP,PSOE,SUMAR,VOX)
+```
+
+
+3. Mutate
+
+a. Crea la variable de participación
+```{r}
+elec23_part <- elec23_part %>% 
+  mutate(Part = Votantes/Censo*100)
+```
+
+b. Crea una variable que indique la relación de votos entre PP y PSOE
+```{r}
+elec23_paes <- elec23_paes %>% 
+  mutate(relPPPSOE = PP/PSOE)
+```
+
+c. Crea la variable de porcentaje de voto a un partido, elige el que te guste más (o al que nunca votarías)
+```{r}
+elec23 <- elec23 %>% 
+  mutate(PACMA_por = PACMA/Votantes*100)
+```
+
+d. Categoriza los municipios en base a su población en dos o tres categorías. [Pista: usa if_else()]
+```{r}
+elec23 <- elec23 %>% 
+  mutate(municat = if_else(Pob<=10000,"Pueblo","Ciudad") %>% 
+           factor())
+```
+
+e. Calcula el % de apoyo a los principales partidos, ajustado a cada CA. En la mayoría de España esto implica los votos de PSOE, PP, VOX y Podemos; en Catalunya hay que añadirle ERC y JxCat; en el País Vasco PNV y Bildu. [Pista: usa case_when()]
+```{r}
+
+elec23 <- elec23 %>% 
+  mutate(partprinc = case_when(CA=="Catalunya" ~ (PSOE+PP+VOX+SUMAR+ERC+JxCAT)/VotVal*100,
+         CA=="País Vasco" ~ (PSOE+PP+VOX+SUMAR+PNV+BILDU)/VotVal*100,
+         T ~ (PSOE+PP+VOX+SUMAR)/VotVal*100
+  )
+  )
+
+```
+
+a. Ordena los municipios de más a menos poblados
+```{r}
+elec23_pob <- elec23 %>% arrange(-Pob) %>% select(c("Muni","Pob")) %>% head(n = 20)
+```
+
+b. Ordena los municipios en base a los resultados de uno de los partidos (en términos relativos!)
+```{r}
+elec23 %>% 
+  mutate(PP_por = PP/VotVal*100) %>% 
+  arrange(-PP_por) %>% 
+  filter(Pob>10000) %>% 
+  select(Prov,Muni,PP_por,Censo) %>% 
+  head(n=10)
+```
