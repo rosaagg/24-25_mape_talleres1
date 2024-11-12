@@ -37,11 +37,4 @@ elec23 <-
     PNV = `EAJ-PNV`,
     BNG = B.N.G.,
     UPN = U.P.N.
-  ) |> 
-  # Crear una variable que recoja los votos a otras candidaturas
-  mutate(Otros = VotCand- PP - PSOE	- VOX	- SUMAR	- 
-           ERC	- JxCAT	- BILDU	- PNV	- BNG	- CCa	- UPN) |> 
-  # Reubicar esta variable
-  relocate(Otros,.after = UPN) |> 
-  # Seleccionar las variables relevantes, hasta la variable PACMA
-  select(1:which(names(elec23) == "PACMA")) # o 1:26
+  )
